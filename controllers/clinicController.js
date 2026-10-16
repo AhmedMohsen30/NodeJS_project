@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Clinic = require('../models/clinic');
+const Doctor = require('../models/doctor');
 const Specialty = require('../models/specialty');
 
 
@@ -72,7 +73,7 @@ exports.getClinicById = async (req, res, next) => {
   }
 };
 
-const Doctor = require('../models/doctor');
+
 
 exports.getDoctors = async (req, res, next) => {
   try {
@@ -85,6 +86,37 @@ exports.getDoctors = async (req, res, next) => {
       success: true,
       total: doctors.length,
       data: doctors
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getDoctorByNumber = async (req, res, next) => {
+  try {
+    const doctorNumber = Number(req.params.number);
+
+    if (!Number.isInteger(doctorNumber) || doctorNumber < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid doctor number'
+      });
+    }
+
+    const doctor = await Doctor.findOne({ doctorNumber })
+      .populate('clinic', 'name city')
+      .populate('specialty', 'name');
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Doctor not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: doctor
     });
   } catch (err) {
     next(err);
