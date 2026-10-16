@@ -8,7 +8,9 @@
   },
   "scripts": {
     "start": "node app.js",
-    "dev": "node --watch app.js"
+    "dev": "node --watch app.js",
+    "seed:clinics": "node seeds/clinics.js",
+    "seed:doctors": "node seeds/doctors.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
