@@ -1,7 +1,7 @@
-require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const mongoose = require('mongoose');
-const Specialty = require('../models/specialty');
-const Clinic = require('../models/clinic');
+const Specialty = require('../models/Specialty');
+const Clinic = require('../models/Clinic');
 
 const specialties = [
   { name: 'Cardiology', icon: 'heart' },
@@ -26,21 +26,32 @@ const rows = [
 ];
 
 (async () => {
-  await mongoose.connect(process.env.MONGO_URI);
-  await Clinic.deleteMany();
-  await Specialty.deleteMany();
+  if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is missing from .env');
+  await mongoose.connect(process.env.MONGODB_URI);
 
-  const specDocs = await Specialty.insertMany(specialties);
+  const specDocs = [];
+  for (const specialty of specialties) {
+    const saved = await Specialty.findOneAndUpdate(
+      { name: specialty.name },
+      { $setOnInsert: specialty },
+      { upsert: true, new: true }
+    );
+    specDocs.push(saved);
+  }
   const idOf = Object.fromEntries(specDocs.map((s) => [s.name, s._id]));
 
-  await Clinic.insertMany(
-    rows.map(([name, city, address, specs, rating, reviewsCount, minPrice, maxPrice, isFeatured]) => ({
+  for (const [name, city, address, specs, rating, reviewsCount, minPrice, maxPrice, isFeatured] of rows) {
+    await Clinic.findOneAndUpdate(
+      { name },
+      { $setOnInsert: {
       name, city, address, rating, reviewsCount, minPrice, maxPrice, isFeatured,
       specialties: specs.map((s) => idOf[s]),
       about: `${name} provides high-quality healthcare with a team of experienced doctors.`,
       contact: { phone: '+20 2 26123456', email: 'info@clinic.com' },
-    }))
-  );
+      } },
+      { upsert: true, new: true }
+    );
+  }
 
   console.log('Seeded 6 specialties and 10 clinics');
   process.exit(0);

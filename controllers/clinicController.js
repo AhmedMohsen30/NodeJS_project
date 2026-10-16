@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const Clinic = require('../models/clinic');
-const Specialty = require('../models/specialty');
+const Clinic = require('../models/Clinic');
+const Specialty = require('../models/Specialty');
 
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -72,7 +72,7 @@ exports.getClinicById = async (req, res, next) => {
   }
 };
 
-const Doctor = require('../models/doctor');
+const Doctor = require('../models/Doctor');
 
 exports.getDoctors = async (req, res, next) => {
   try {

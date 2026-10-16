@@ -1,12 +1,12 @@
 
 require('dotenv').config({
-  path: require('path').join(__dirname, '../../.env')
+  path: require('path').join(__dirname, '../.env')
 });
 
 const mongoose = require('mongoose');
-const Doctor = require('../models/doctor');
-const Clinic = require('../models/clinic');
-const Specialty = require('../models/specialty');
+const Doctor = require('../models/Doctor');
+const Clinic = require('../models/Clinic');
+const Specialty = require('../models/Specialty');
 
 const doctors = [
   {
@@ -57,7 +57,8 @@ const doctors = [
 ];
 
 async function seedDoctors() {
-  await mongoose.connect(process.env.MONGO_URI);
+  if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is missing from .env');
+  await mongoose.connect(process.env.MONGODB_URI);
 
   for (const item of doctors) {
     const clinic = await Clinic.findOne({ name: item.clinicName });
