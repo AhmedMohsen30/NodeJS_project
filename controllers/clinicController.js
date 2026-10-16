@@ -90,3 +90,34 @@ exports.getDoctors = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getDoctorByNumber = async (req, res, next) => {
+  try {
+    const doctorNumber = Number(req.params.number);
+
+    if (!Number.isInteger(doctorNumber) || doctorNumber < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid doctor number'
+      });
+    }
+
+    const doctor = await Doctor.findOne({ doctorNumber })
+      .populate('clinic', 'name city')
+      .populate('specialty', 'name');
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Doctor not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: doctor
+    });
+  } catch (err) {
+    next(err);
+  }
+};
