@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { getSpecialties, getClinics, getClinicById } = require('../controllers/cliniccontroller');
+const { getSpecialties, getClinics, getClinicById } = require('../controllers/clinicController');
 
 router.get('/specialties', getSpecialties);
 router.get('/clinics', getClinics);
