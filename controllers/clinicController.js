@@ -74,7 +74,6 @@ exports.getClinicById = async (req, res, next) => {
 
 const Doctor = require('../models/doctor');
 
-// GET /api/doctors
 exports.getDoctors = async (req, res, next) => {
   try {
     const doctors = await Doctor.find()
