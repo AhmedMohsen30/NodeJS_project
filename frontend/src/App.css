@@ -91,6 +91,9 @@ button:disabled { cursor: wait; opacity: .65; }
 .doctor-card p { margin: 4px 0; }
 .doctor-card button { margin-top: auto; }
 .booking-panel { margin-top: 28px; }
+.booking-dialog { position: relative; width: min(680px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; margin: 0; padding: 30px; }
+.booking-dialog h2 { padding-left: 34px; }
+.booking-dialog .close-button { min-height: 0 !important; padding: 0 !important; background: none !important; color: #65837b !important; }
 .date-label { max-width: 230px; margin: 18px 0; }
 .slot-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
 .slot-list button { background: #e8f7f1 !important; color: #208975 !important; }

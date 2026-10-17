@@ -79,6 +79,13 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
     setError('')
   }
 
+  function closeDoctor() {
+    setSelectedDoctor(null)
+    setSlot(null)
+    setBooking(null)
+    setError('')
+  }
+
   async function createBooking(event) {
     event.preventDefault()
     if (!token) return onGoAccount()
@@ -128,7 +135,9 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
       <p>سعر الكشف: {doctor.fee} جنيه</p>
       <button onClick={() => chooseDoctor(doctor)}>المواعيد المتاحة</button>
     </article>)}</div>}
-    {selectedDoctor && <div className="panel booking-panel">
+    {selectedDoctor && <div className="dialog-backdrop" onClick={closeDoctor}>
+    <div className="panel booking-panel booking-dialog" role="dialog" aria-modal="true" aria-label={`مواعيد ${selectedDoctor.name}`} onClick={(event) => event.stopPropagation()}>
+      <button className="close-button" type="button" aria-label="إغلاق المواعيد" onClick={closeDoctor}>×</button>
       <h2>مواعيد {selectedDoctor.name}</h2>
       <label className="date-label">اليوم<input type="date" min={cairoToday()} value={date} onChange={(event) => { setDate(event.target.value); setSlot(null); setSlots([]); setSlotsLoading(true); setBooking(null) }} /></label>
       {slotsLoading && <p>جاري تحميل المواعيد...</p>}
@@ -149,6 +158,7 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
         {booking.status === 'pending_payment' && <><p>زر الدفع هنا للتجربة فقط، ولا يخصم فلوس حقيقية.</p><button disabled={busy} onClick={pay}>تأكيد الدفع التجريبي</button></>}
         {booking.status === 'confirmed' && <button className="secondary-button" onClick={onGoAppointments}>اعرض حجوزاتي</button>}
       </div>}
+    </div>
     </div>}
   </section>
 }
