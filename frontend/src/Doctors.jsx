@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from './api.js'
 
 function cairoToday() {
@@ -15,6 +15,12 @@ function cairoTime() {
   }).formatToParts(new Date())
   const value = (name) => parts.find((part) => part.type === name).value
   return `${value('hour')}:${value('minute')}`
+}
+
+function addDays(date, days) {
+  const next = new Date(date + 'T00:00:00Z')
+  next.setUTCDate(next.getUTCDate() + days)
+  return next.toISOString().slice(0, 10)
 }
 
 function Doctors({ token, onGoAccount, onGoAppointments }) {
@@ -34,6 +40,8 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
   const [loading, setLoading] = useState(true)
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [slotsVersion, setSlotsVersion] = useState(0)
+  const [availabilityMessage, setAvailabilityMessage] = useState('')
+  const findNextDate = useRef(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
@@ -54,21 +62,43 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
   useEffect(() => {
     if (!selectedDoctor) return
     let active = true
-    api(`/api/doctors/${selectedDoctor._id}/slots?date=${date}`)
-      .then((result) => {
-        if (!active) return
-        const available = date === cairoToday()
-          ? result.data.filter((item) => item.time > cairoTime())
-          : result.data
-        setSlots(available)
+    const lookForNextDate = findNextDate.current
+    findNextDate.current = false
+
+    async function loadSlots() {
+      try {
+        for (let day = 0; day < (lookForNextDate ? 14 : 1); day++) {
+          const requestedDate = addDays(date, day)
+          const result = await api(`/api/doctors/${selectedDoctor._id}/slots?date=${requestedDate}`)
+          if (!active) return
+          const available = requestedDate === cairoToday()
+            ? result.data.filter((item) => item.time > cairoTime())
+            : result.data
+          if (available.length || !lookForNextDate) {
+            setSlots(available)
+            setError('')
+            if (day > 0) {
+              setDate(requestedDate)
+              setAvailabilityMessage('مفيش مواعيد متبقية النهارده؛ عرضنا أقرب يوم متاح.')
+            }
+            return
+          }
+        }
+        setSlots([])
         setError('')
-      })
-      .catch((err) => { if (active) setError(err.message) })
-      .finally(() => { if (active) setSlotsLoading(false) })
+        setAvailabilityMessage('مفيش مواعيد متاحة خلال الـ١٤ يوم الجايين.')
+      } catch (err) {
+        if (active) setError(err.message)
+      } finally {
+        if (active) setSlotsLoading(false)
+      }
+    }
+    loadSlots()
     return () => { active = false }
   }, [selectedDoctor, date, slotsVersion])
 
   function chooseDoctor(doctor) {
+    findNextDate.current = true
     setSelectedDoctor(doctor)
     setDate(cairoToday())
     setSlot(null)
@@ -77,11 +107,13 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
     setSlotsVersion((current) => current + 1)
     setBooking(null)
     setMessage('')
+    setAvailabilityMessage('')
     setError('')
     setFormErrors({})
   }
 
   function closeDoctor() {
+    findNextDate.current = false
     setSelectedDoctor(null)
     setSlot(null)
     setBooking(null)
@@ -159,7 +191,9 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
     <div className="panel booking-panel booking-dialog" role="dialog" aria-modal="true" aria-label={`مواعيد ${selectedDoctor.name}`} onClick={(event) => event.stopPropagation()}>
       <button className="close-button" type="button" aria-label="إغلاق المواعيد" onClick={closeDoctor}>×</button>
       <h2>مواعيد {selectedDoctor.name}</h2>
-      <label className="date-label">اليوم<input type="date" min={cairoToday()} value={date} onChange={(event) => { setDate(event.target.value); setSlot(null); setSlots([]); setSlotsLoading(true); setBooking(null) }} /></label>
+      <p>المواعيد من ٩ صباحًا إلى ٥ مساءً، وآخر حجز يبدأ ٤ مساءً.</p>
+      <label className="date-label">اليوم<input type="date" min={cairoToday()} max={addDays(cairoToday(), 13)} value={date} onChange={(event) => { findNextDate.current = false; setDate(event.target.value); setSlot(null); setSlots([]); setSlotsLoading(true); setBooking(null); setAvailabilityMessage('') }} /></label>
+      {availabilityMessage && <p className="inline-message">{availabilityMessage}</p>}
       {slotsLoading && <p>جاري تحميل المواعيد...</p>}
       {!slotsLoading && !error && slots.length === 0 && <p>مفيش مواعيد متاحة لليوم ده. جرّب يوم تاني.</p>}
       <div className="slot-list">{slots.map((item) => <button key={item._id} className={slot?._id === item._id ? 'selected' : ''} onClick={() => { setSlot(item); setBooking(null); setMessage('') }}>{item.time}</button>)}</div>

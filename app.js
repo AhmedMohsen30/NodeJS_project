@@ -37,6 +37,7 @@ const start = async () => {
   }
   await connectDB();
   require('./jobs/releaseExpired')();
+  require('./jobs/maintainSlots')();
   app.listen(port, () => console.log('Server running on port ' + port));
 };
 
