@@ -5,9 +5,10 @@
 ## تشغيل المشروع
 
 - `app.js` هو نقطة تشغيل السيرفر. اتصال MongoDB موجود في `config/db.js` ويُستدعى مرة واحدة من `app.js`.
-- مفتاح الاتصال في `.env` اسمه `MONGODB_URI`، والمنفذ اختياري باسم `PORT`. انسخ أسماء المتغيرات من `.env.example`، ولا ترفع `.env` أو كلمات السر.
+- مفتاح الاتصال في `.env` اسمه `MONGODB_URI`، واكتب `/careclinic` بعد اسم الـcluster وقبل `?` إن وُجدت حتى لا تُحفظ البيانات في قاعدة `test`. المنفذ اختياري باسم `PORT`. انسخ أسماء المتغيرات من `.env.example`، ولا ترفع `.env` أو كلمات السر.
 - الحزم المشتركة الحالية في `package.json`: `express`, `mongoose`, `dotenv`, `bcrypt`, `jsonwebtoken`, `nodemailer`. استخدموا Node.js 20 أو أحدث، وتثبيت نفس النسخ يتم بـ `npm ci`. لو احتاج كود زميل حزمة جديدة، ابعت اسم الحزمة لمسؤول الدمج ليضيفها إلى `package.json` و`package-lock.json`.
 - استعملوا `require` و`module.exports` مثل الملفات الموجودة، واكتبوا أسماء الملفات في `require` بنفس حالة الأحرف تمامًا؛ هذا مهم عند التشغيل على Linux.
+- مسارات تسجيل الحساب والدخول مفعلة على `/api/auth`. أضف `JWT_SECRET` بطول 32 حرفًا على الأقل إلى `.env`. إرسال كود التفعيل يحتاج إعدادات `SMTP_HOST` و`SMTP_PORT` و`SMTP_USER` و`SMTP_PASS` و`SMTP_FROM`، كما هو موضح في `.env.example`.
 - لإضافة بيانات التجربة للعيادات والتخصصات، شغّل `npm run seed:clinics` بعد ضبط `MONGODB_URI`. الأمر يضيف 6 تخصصات و10 عيادات إذا لم تكن موجودة، ولا يحذف البيانات الموجودة.
 - بعد العيادات، شغّل `npm run seed:doctors` لإضافة 5 أطباء تجريبيين وربط كل طبيب بعيادته وتخصصه.
 
@@ -23,7 +24,7 @@
 
 ## إضافة المسارات عند وصول الملفات
 
-في `app.js` توجد أسطر معلَّقة للـauth والأطباء والحجوزات. فعّل كل سطر عندما تصل ملفات الـrouter والـcontroller والـmodel والـmiddleware التي يعتمد عليها. اترك `appointmentActionsRoutes` قبل `appointmentRoutes` حتى لا يلتقط `GET /:id` الرابط `/my`.
+في `app.js` مسارات الـauth مفعلة بالفعل. أسطر الأطباء والحجوزات ما زالت معلَّقة؛ فعّل كل سطر عندما تصل ملفات الـrouter والـcontroller والـmodel والـmiddleware التي يعتمد عليها. اترك `appointmentActionsRoutes` قبل `appointmentRoutes` حتى لا يلتقط `GET /:id` الرابط `/my`.
 
 لا تضف `/api` داخل ملفات الـrouter إذا كان `app.js` يضيفه عند `app.use`. مثال: ملف `appointmentRoutes.js` يكتب `router.get('/:id', ...)`، و`app.js` يركبه على `/api/appointments`.
 
