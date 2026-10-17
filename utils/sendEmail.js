@@ -6,7 +6,7 @@ const sendEmail = async (to, subject, html) => {
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
-    if (!host && !from && process.env.EMAIL_MODE === 'console') {
+    if (process.env.EMAIL_MODE === 'console') {
         if (process.env.NODE_ENV === 'production') {
             throw new Error('Set SMTP settings to send emails in production');
         }
