@@ -10,7 +10,8 @@
     "start": "node app.js",
     "dev": "node --watch app.js",
     "seed:clinics": "node seeds/clinics.js",
-    "seed:doctors": "node seeds/doctors.js"
+    "seed:doctors": "node seeds/doctors.js",
+    "seed:slots": "node seeds/slots.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
