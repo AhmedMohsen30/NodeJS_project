@@ -23,7 +23,7 @@ function addDays(date, days) {
   return next.toISOString().slice(0, 10)
 }
 
-function Doctors({ token, onGoAccount, onGoAppointments }) {
+function Doctors({ token, onGoAccount, onGoAppointments, slotToShow, onSlotShown }) {
   const [specialties, setSpecialties] = useState([])
   const [doctors, setDoctors] = useState([])
   const [specialty, setSpecialty] = useState('')
@@ -42,6 +42,7 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
   const [slotsVersion, setSlotsVersion] = useState(0)
   const [availabilityMessage, setAvailabilityMessage] = useState('')
   const findNextDate = useRef(false)
+  const requestedSlot = useRef(slotToShow)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
@@ -53,11 +54,29 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
     let active = true
     const query = specialty ? '?limit=50&specialty=' + specialty : '?limit=50'
     api('/api/doctors' + query)
-      .then((result) => { if (active) { setDoctors(result.data); setError('') } })
+      .then((result) => {
+        if (!active) return
+        setDoctors(result.data)
+        setError('')
+        if (requestedSlot.current) {
+          const doctor = result.data.find((item) => item._id === requestedSlot.current.doctorId)
+          if (doctor) {
+            findNextDate.current = false
+            setSelectedDoctor(doctor)
+            setDate(requestedSlot.current.date)
+            setSlots([])
+            setSlotsLoading(true)
+            setAvailabilityMessage('دي مواعيد نفس يوم الحجز. لو الميعاد الملغي مش ظاهر، ممكن يكون اتحجز تاني أو وقته فات.')
+            setSlotsVersion((current) => current + 1)
+          }
+          requestedSlot.current = null
+          onSlotShown()
+        }
+      })
       .catch((err) => { if (active) setError(err.message) })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [specialty])
+  }, [specialty, onSlotShown])
 
   useEffect(() => {
     if (!selectedDoctor) return

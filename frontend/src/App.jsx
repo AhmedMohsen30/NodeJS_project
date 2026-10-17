@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import Clinics from './Clinics.jsx'
 import Account from './Account.jsx'
 import Doctors from './Doctors.jsx'
@@ -17,6 +17,8 @@ function App() {
   const [page, setPage] = useState('clinics')
   const [token, setToken] = useState(() => sessionStorage.getItem('careclinic_token') || '')
   const [user, setUser] = useState(savedUser)
+  const [slotToShow, setSlotToShow] = useState(null)
+  const clearSlotToShow = useCallback(() => setSlotToShow(null), [])
 
   function login(nextToken, nextUser) {
     sessionStorage.setItem('careclinic_token', nextToken)
@@ -37,6 +39,11 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  function showCancelledSlot(doctorId, date) {
+    setSlotToShow({ doctorId, date })
+    navigate('doctors')
+  }
+
   return <>
     <header className="site-header"><div className="container header-content">
       <button className="brand brand-button" onClick={() => navigate('clinics')} dir="ltr"><span className="brand-mark">+</span>Care<span>Clinic</span></button>
@@ -49,8 +56,8 @@ function App() {
     </div></header>
     <main>
       {page === 'clinics' && <Clinics />}
-      {page === 'doctors' && <Doctors token={token} onGoAccount={() => navigate('account')} onGoAppointments={() => navigate('appointments')} />}
-      {page === 'appointments' && <Appointments token={token} onGoAccount={() => navigate('account')} />}
+      {page === 'doctors' && <Doctors token={token} onGoAccount={() => navigate('account')} onGoAppointments={() => navigate('appointments')} slotToShow={slotToShow} onSlotShown={clearSlotToShow} />}
+      {page === 'appointments' && <Appointments token={token} onGoAccount={() => navigate('account')} onShowCancelledSlot={showCancelledSlot} />}
       {page === 'account' && <Account user={user} onLogin={login} onLogout={logout} />}
     </main>
     <footer><div className="container">CareClinic · مشروع إدارة العيادات</div></footer>
