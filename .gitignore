@@ -1,7 +1,17 @@
 node_modules/
+dist/
+coverage/
 .env
 .env.*
 !.env.example
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+*service-account*.json
 *.log
 .postman/
 postman/globals/
+postman/environments/

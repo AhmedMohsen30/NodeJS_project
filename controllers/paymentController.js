@@ -89,9 +89,14 @@ let cancelAppointment = async (req, res) => {
       return res.status(409).json({ message: 'Booking time is missing' });
     }
 
-    const startTime = new Date(appointment.slot.date);
+    const [year, month, day] = appointment.slot.date.split('-').map(Number);
     const [hour, minute] = appointment.slot.time.split(':').map(Number);
-    startTime.setHours(hour, minute, 0, 0);
+    const utcTime = Date.UTC(year, month - 1, day, hour, minute);
+    const cairoZone = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Africa/Cairo', timeZoneName: 'shortOffset',
+    }).formatToParts(new Date(utcTime)).find(part => part.type === 'timeZoneName').value;
+    const cairoOffset = Number(cairoZone.slice(3));
+    const startTime = new Date(utcTime - cairoOffset * 60 * 60 * 1000);
     const hoursLeft = (startTime - new Date()) / (1000 * 60 * 60);
     if (!Number.isFinite(hoursLeft) || hoursLeft <= 0) {
       return res.status(409).json({ message: 'Appointment time has passed' });

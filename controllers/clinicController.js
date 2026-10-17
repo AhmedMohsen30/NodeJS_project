@@ -18,13 +18,30 @@ exports.getSpecialties = async (req, res, next) => {
 exports.getClinics = async (req, res, next) => {
   try {
     const { q, specialty, city, featured, sort } = req.query;
-    const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    for (const value of Object.values(req.query)) {
+      if (typeof value !== 'string') {
+        return res.status(400).json({ success: false, message: 'Invalid query parameter' });
+      }
+    }
+
+    const page = Number(req.query.page || 1);
+    const requestedLimit = Number(req.query.limit || 10);
+    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(requestedLimit) || requestedLimit < 1) {
+      return res.status(400).json({ success: false, message: 'Invalid page or limit' });
+    }
+    const limit = Math.min(requestedLimit, 50);
+    if (!Number.isSafeInteger((page - 1) * limit)) {
+      return res.status(400).json({ success: false, message: 'Page is too large' });
+    }
+    if (featured && featured !== 'true' && featured !== 'false') {
+      return res.status(400).json({ success: false, message: 'Invalid featured value' });
+    }
 
     const filter = {};
     if (q) filter.name = { $regex: escapeRegex(q), $options: 'i' };
     if (city) filter.city = { $regex: `^${escapeRegex(city)}$`, $options: 'i' };
     if (featured === 'true') filter.isFeatured = true;
+    if (featured === 'false') filter.isFeatured = false;
     if (specialty) {
       const spec = mongoose.isValidObjectId(specialty)
         ? { _id: specialty }
@@ -38,6 +55,9 @@ exports.getClinics = async (req, res, next) => {
       price_asc: { minPrice: 1 },
       price_desc: { minPrice: -1 },
     };
+    if (sort && !Object.hasOwn(sorts, sort)) {
+      return res.status(400).json({ success: false, message: 'Invalid sort option' });
+    }
 
     const total = await Clinic.countDocuments(filter);
     const data = await Clinic.find(filter)
@@ -85,6 +105,37 @@ exports.getDoctors = async (req, res, next) => {
       success: true,
       total: doctors.length,
       data: doctors
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getDoctorByNumber = async (req, res, next) => {
+  try {
+    const doctorNumber = Number(req.params.number);
+
+    if (!Number.isInteger(doctorNumber) || doctorNumber < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid doctor number'
+      });
+    }
+
+    const doctor = await Doctor.findOne({ doctorNumber })
+      .populate('clinic', 'name city')
+      .populate('specialty', 'name');
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Doctor not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: doctor
     });
   } catch (err) {
     next(err);
