@@ -32,3 +32,5 @@ The React frontend communicates with a Node.js and Express API. MongoDB stores c
 4. Follow the appointment in My Appointments, or cancel it if plans change.
 
 > Payments and refunds are simulated in the database. The project does not charge or return real money.
+
+The clinic images are illustrative visuals for the sample clinics, not photographs of real facilities.

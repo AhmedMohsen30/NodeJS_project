@@ -25,6 +25,19 @@ const rows = [
   ['Delta Medical Center', 'Mansoura', 'El Gomhoria St', ['Internal Medicine', 'Cardiology'], 4.0, 40, 150, 300, false],
 ];
 
+const clinicPhotos = {
+  'Al Noor Medical Center': '/clinic-images/general.webp',
+  'Care Heart Clinic': '/clinic-images/cardiology.webp',
+  'New Life Hospital': '/clinic-images/general.webp',
+  'Al Salam Medical Center': '/clinic-images/dermatology.webp',
+  'Healthy Kids Clinic': '/clinic-images/pediatrics.webp',
+  'El Sham Clinic': '/clinic-images/womens-health.webp',
+  'Bone & Joint Center': '/clinic-images/orthopedics.webp',
+  'Mother Care Clinic': '/clinic-images/womens-health.webp',
+  'Skin Plus Clinic': '/clinic-images/dermatology.webp',
+  'Delta Medical Center': '/clinic-images/general.webp',
+};
+
 (async () => {
   if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is missing from .env');
   await mongoose.connect(process.env.MONGODB_URI);
@@ -41,16 +54,22 @@ const rows = [
   const idOf = Object.fromEntries(specDocs.map((s) => [s.name, s._id]));
 
   for (const [name, city, address, specs, rating, reviewsCount, minPrice, maxPrice, isFeatured] of rows) {
-    await Clinic.findOneAndUpdate(
+    const photo = clinicPhotos[name];
+    const clinic = await Clinic.findOneAndUpdate(
       { name },
       { $setOnInsert: {
-      name, city, address, rating, reviewsCount, minPrice, maxPrice, isFeatured,
-      specialties: specs.map((s) => idOf[s]),
-      about: `${name} provides high-quality healthcare with a team of experienced doctors.`,
-      contact: { phone: '+20 2 26123456', email: 'info@clinic.com' },
+        name, city, address, rating, reviewsCount, minPrice, maxPrice, isFeatured,
+        photos: [photo],
+        specialties: specs.map((s) => idOf[s]),
+        about: `${name} provides high-quality healthcare with a team of experienced doctors.`,
+        contact: { phone: '+20 2 26123456', email: 'info@clinic.com' },
       } },
       { upsert: true, new: true }
     );
+    if (!clinic.photos.length) {
+      clinic.photos = [photo];
+      await clinic.save();
+    }
   }
 
   console.log('Seeded 6 specialties and 10 clinics');

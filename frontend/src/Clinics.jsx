@@ -90,7 +90,7 @@ function Clinics() {
       {!loading && !error && <div className="clinic-grid">
         {clinics.map((clinic) => <article className="clinic-card" key={clinic._id}>
           <div className="clinic-image">
-            {clinic.photos?.length ? <img src={clinic.photos[0]} alt={clinic.name} /> : <span aria-hidden="true">✚</span>}
+            {clinic.photos?.length ? <img src={clinic.photos[0]} alt={`صورة توضيحية لعيادة ${clinic.name}`} loading="lazy" /> : <span aria-hidden="true">✚</span>}
             {clinic.isFeatured && <span className="featured">مميزة</span>}
           </div>
           <div className="clinic-body">
@@ -107,6 +107,7 @@ function Clinics() {
         {detailsLoading && <p>جاري تحميل التفاصيل...</p>}
         {selectedClinic && <>
           <span className="eyebrow">تفاصيل العيادة</span><h2>{selectedClinic.name}</h2>
+          {selectedClinic.photos?.length > 0 && <img className="clinic-details-image" src={selectedClinic.photos[0]} alt={`صورة توضيحية لعيادة ${selectedClinic.name}`} />}
           <p>{selectedClinic.about || 'لا يوجد وصف متاح للعيادة بعد.'}</p>
           <dl>
             <div><dt>العنوان</dt><dd>{selectedClinic.address}، {selectedClinic.city}</dd></div>

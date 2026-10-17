@@ -39,8 +39,8 @@ nav a:hover { color: #179c84; }
 .text-button { color: #159b82; background: none; border: 0; font-weight: 700; margin-top: 18px; }
 .clinic-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 .clinic-card { min-width: 0; background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid #e3eeea; box-shadow: 0 12px 28px #3b69550c; }
-.clinic-image { height: 165px; background: linear-gradient(120deg, #d6f1e9, #b7dfd1); position: relative; display: grid; place-items: center; color: #159b82; font-size: 60px; }
-.clinic-image img { width: 100%; height: 100%; object-fit: cover; }
+.clinic-image { height: 165px; overflow: hidden; background: linear-gradient(120deg, #d6f1e9, #b7dfd1); position: relative; display: grid; place-items: center; color: #159b82; font-size: 60px; }
+.clinic-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .featured { position: absolute; top: 14px; right: 14px; background: #fff; color: #158f79; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 700; }
 .clinic-body { padding: 20px; }
 .clinic-body h3 { margin: 0 0 8px; font-size: 19px; }
@@ -55,6 +55,7 @@ footer { padding: 24px 0; color: #718b85; font-size: 13px; text-align: center; }
 .dialog-backdrop { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; background: #0c2928a8; }
 .details-dialog { position: relative; width: min(530px, 100%); max-height: 90vh; overflow: auto; background: #fff; border-radius: 18px; padding: 35px; box-shadow: 0 20px 60px #092c2938; }
 .details-dialog h2 { margin: 12px 0; }
+.clinic-details-image { display: block; width: 100%; height: 190px; object-fit: cover; border-radius: 12px; }
 .details-dialog p { color: #5c7b73; line-height: 1.8; }
 .close-button { position: absolute; left: 20px; top: 14px; border: 0; background: none; font-size: 30px; color: #65837b; }
 .details-dialog dl { margin: 24px 0 0; }
@@ -104,3 +105,79 @@ button:disabled { cursor: wait; opacity: .65; }
 .appointment-list { display: grid; gap: 16px; margin-top: 22px; }
 @media (max-width: 800px) { .doctor-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 620px) { .header-content { flex-wrap: wrap; padding: 12px 0; } nav { width: 100%; overflow-x: auto; } .doctor-grid { grid-template-columns: 1fr; } .page-section { padding-top: 42px; } .page-section h1 { font-size: 27px; } }
+
+/* Clear feedback for cards and controls */
+.brand-mark, .hero-card, .clinic-card, .clinic-image img, .doctor-card, .appointment-list .panel {
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, filter .25s ease;
+}
+button:not(:disabled), .hero-link {
+  transition: color .2s ease, background-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+nav button { position: relative; }
+nav button::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 3px;
+  height: 3px;
+  background: #159b82;
+  transform: scaleX(0);
+  transition: transform .18s ease;
+}
+nav button.active::after, nav button:focus-visible::after { transform: scaleX(1); }
+.clinic-card:focus-within, .doctor-card:focus-within, .appointment-list .panel:focus-within {
+  border-color: #159b82;
+  box-shadow: 0 22px 45px #1e66513d;
+  transform: translateY(-8px);
+}
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid #0e816c;
+  outline-offset: 3px;
+}
+.filters input:focus, .filters select:focus, .stack-form input:focus, .date-label input:focus {
+  border-color: #159b82;
+  box-shadow: 0 0 0 3px #159b8222;
+}
+
+@media (hover: hover) {
+  nav button:hover::after { transform: scaleX(1); }
+  .brand-button:hover .brand-mark { transform: rotate(-10deg) scale(1.13); box-shadow: 0 8px 18px #159b8245; }
+  .hero-card:hover { transform: rotate(0) translateY(-9px) scale(1.03); box-shadow: 0 28px 55px #26695b40; }
+  .clinic-card:hover, .doctor-card:hover, .appointment-list .panel:hover {
+    border-color: #159b82;
+    box-shadow: 0 22px 45px #1e66513d;
+    transform: translateY(-8px);
+  }
+  .clinic-card:hover .clinic-image img { transform: scale(1.1); filter: saturate(1.16); }
+  .hero-link:hover, .filters button:hover, .clinic-footer button:hover,
+  .panel button:not(.text-button, .secondary-button, .close-button):not(:disabled):hover,
+  .stack-form button:not(:disabled):hover {
+    background: #0c7664;
+    box-shadow: 0 10px 22px #147b6566;
+    transform: translateY(-3px) scale(1.04);
+  }
+  .panel button.secondary-button:not(:disabled):hover, button.secondary-button:not(:disabled):hover {
+    background: #e8f7f1;
+    box-shadow: 0 8px 18px #147b6533;
+    transform: translateY(-3px);
+  }
+  .tab-row button:not(.active, :disabled):hover,
+  .slot-list button:not(.selected, :disabled):hover { background: #d3efe4 !important; }
+  .filters input:hover, .filters select:hover, .stack-form input:hover { border-color: #9acfc2; }
+}
+
+/* Touch screens show the same feedback while a card or button is pressed. */
+.clinic-card:active, .doctor-card:active, .appointment-list .panel:active {
+  border-color: #159b82;
+  box-shadow: 0 18px 38px #1e66513d;
+  transform: translateY(-5px);
+}
+.clinic-card:active .clinic-image img { transform: scale(1.08); }
+button:not(:disabled):active, .hero-link:active { transform: scale(.96); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  .brand-mark, .hero-card, .clinic-card, .clinic-image img, .doctor-card,
+  .appointment-list .panel, button, .hero-link { transform: none !important; }
+}
