@@ -12,7 +12,9 @@
 - لو هتستخدم Gmail في المناقشة: اكتب `EMAIL_MODE=smtp` و`SMTP_HOST=smtp.gmail.com` و`SMTP_PORT=465`، واجعل `SMTP_USER` و`SMTP_FROM` نفس عنوان Gmail. ضع **App Password** في `SMTP_PASS` بعد تفعيل التحقق بخطوتين؛ لا تستخدم كلمة مرور Gmail العادية ولا ترفع ملف `.env`.
 - إعداد حساب الإرسال يتم مرة واحدة على السيرفر. المستخدم يسجل ببريده العادي فقط، ولا يحتاج إعداد SMTP أو App Password. عند نشر التطبيق لعدد كبير من المستخدمين، يمكن تغيير مزود الإرسال من خلال إعدادات SMTP نفسها.
 - لإضافة بيانات التجربة للعيادات والتخصصات، شغّل `npm run seed:clinics` بعد ضبط `MONGODB_URI`. الأمر يضيف 6 تخصصات و10 عيادات إذا لم تكن موجودة، ولا يحذف البيانات الموجودة.
-- بعد العيادات، شغّل `npm run seed:doctors` لإضافة 5 أطباء تجريبيين وربط كل طبيب بعيادته وتخصصه.
+- بعد العيادات، شغّل `npm run seed:doctors` لإضافة 15 طبيبًا تجريبيًا، ثم `npm run seed:slots` لإنشاء مواعيد 14 يومًا. إعادة تشغيل الأمرين لا تمسح الأطباء أو المواعيد المحجوزة.
+- مسارات الحجز والدفع تعمل على `/api/appointments`. شغّل السيرفر بعد ضبط `JWT_SECRET` و`MONGODB_URI`، وأرسل توكن المستخدم في `Authorization: Bearer ...` عند الحجز.
+- مهلة الدفع الافتراضية 15 دقيقة ونسبة العربون 20%. يمكن تغييرهما من `PAYMENT_WINDOW_MIN` و`DEPOSIT_PERCENT` في `.env`. مهمة إنهاء الحجوزات غير المدفوعة تبدأ تلقائيًا مع السيرفر وتفحصها كل دقيقة.
 
 ## اتفاق الملفات بين الأشخاص
 
@@ -24,9 +26,9 @@
 | الحجز | `models/Appointment.js`، `controllers/appointmentController.js`، `routes/appointmentRoutes.js`، `jobs/releaseExpired.js` | الحجز يحتوي `user`, `doctor`, `clinic`, `slot`, `code`, `patientName`, `status`, `paymentStatus`, `expiresAt`. حالات الحجز: `pending_payment`, `confirmed`, `cancelled`, `expired`. حالات الدفع: `unpaid`, `paid`, `refunded`, `forfeited`. |
 | الدفع والإلغاء | `controllers/paymentController.js`، `routes/appointmentActionsRoutes.js`، `utils/sendBookingEmail.js` | هذه الملفات تعتمد على أسماء الحقول والتصديرات السابقة. |
 
-## إضافة المسارات عند وصول الملفات
+## ترتيب المسارات
 
-في `app.js` مسارات الـauth مفعلة بالفعل. أسطر الأطباء والحجوزات ما زالت معلَّقة؛ فعّل كل سطر عندما تصل ملفات الـrouter والـcontroller والـmodel والـmiddleware التي يعتمد عليها. اترك `appointmentActionsRoutes` قبل `appointmentRoutes` حتى لا يلتقط `GET /:id` الرابط `/my`.
+في `app.js` مسارات الأطباء والحجز والدفع مفعلة. `appointmentActionsRoutes` يأتي قبل `appointmentRoutes` حتى لا يلتقط `GET /:id` الرابط `/my`.
 
 لا تضف `/api` داخل ملفات الـrouter إذا كان `app.js` يضيفه عند `app.use`. مثال: ملف `appointmentRoutes.js` يكتب `router.get('/:id', ...)`، و`app.js` يركبه على `/api/appointments`.
 
