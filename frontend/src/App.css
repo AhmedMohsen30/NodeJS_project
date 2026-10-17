@@ -101,6 +101,9 @@ button:disabled { cursor: wait; opacity: .65; }
 .slot-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
 .slot-list button { background: #e8f7f1 !important; color: #208975 !important; }
 .slot-list button.selected { background: #159b82 !important; color: #fff !important; }
+.slot-list button.booked, .slot-list button.past { display: grid; justify-items: center; gap: 2px; background: #ecefee !important; color: #71807b !important; border: 1px solid #d7dedb !important; opacity: 1; cursor: not-allowed; }
+.slot-list button.booked .slot-time { text-decoration: line-through; text-decoration-thickness: 2px; }
+.slot-list button small { font-size: 11px; line-height: 1.2; }
 .booking-result { margin-top: 22px; padding: 18px; border: 1px solid #c8dfd8; border-radius: 12px; background: #f6faf9; }
 .appointment-list { display: grid; gap: 16px; margin-top: 22px; }
 @media (max-width: 800px) { .doctor-grid { grid-template-columns: repeat(2, 1fr); } }

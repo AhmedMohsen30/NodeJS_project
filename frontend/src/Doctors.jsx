@@ -23,6 +23,17 @@ function addDays(date, days) {
   return next.toISOString().slice(0, 10)
 }
 
+function showAllHours(result) {
+  if (result.availableCount !== undefined) return result.data
+
+  // Older running servers return only free slots. Fill the 9–5 schedule for display.
+  const slotsByTime = new Map(result.data.map((item) => [item.time, item]))
+  return Array.from({ length: 8 }, (_, hour) => {
+    const time = `${String(hour + 9).padStart(2, '0')}:00`
+    return slotsByTime.get(time) || { _id: `booked-${time}`, time, isBooked: true }
+  })
+}
+
 function Doctors({ token, onGoAccount, onGoAppointments, slotToShow, onSlotShown }) {
   const [specialties, setSpecialties] = useState([])
   const [doctors, setDoctors] = useState([])
@@ -90,11 +101,11 @@ function Doctors({ token, onGoAccount, onGoAppointments, slotToShow, onSlotShown
           const requestedDate = addDays(date, day)
           const result = await api(`/api/doctors/${selectedDoctor._id}/slots?date=${requestedDate}`)
           if (!active) return
-          const available = requestedDate === cairoToday()
-            ? result.data.filter((item) => item.time > cairoTime())
-            : result.data
+          const daySlots = showAllHours(result)
+          const available = daySlots.filter((item) =>
+            !item.isBooked && (requestedDate !== cairoToday() || item.time > cairoTime()))
           if (available.length || !lookForNextDate) {
-            setSlots(available)
+            setSlots(daySlots)
             setError('')
             if (day > 0) {
               setDate(requestedDate)
@@ -169,7 +180,8 @@ function Doctors({ token, onGoAccount, onGoAppointments, slotToShow, onSlotShown
       })
       setBooking(result.appointment)
       setMessage('تم حجز الميعاد مؤقتًا. أكمل تأكيد الدفع خلال ١٥ دقيقة.')
-      setSlots((current) => current.filter((item) => item._id !== slot._id))
+      setSlots((current) => current.map((item) =>
+        item._id === slot._id ? { ...item, isBooked: true } : item))
       setSlot(null)
     } catch (err) {
       setError(err.message)
@@ -211,11 +223,22 @@ function Doctors({ token, onGoAccount, onGoAppointments, slotToShow, onSlotShown
       <button className="close-button" type="button" aria-label="إغلاق المواعيد" onClick={closeDoctor}>×</button>
       <h2>مواعيد {selectedDoctor.name}</h2>
       <p>المواعيد من ٩ صباحًا إلى ٥ مساءً، وآخر حجز يبدأ ٤ مساءً.</p>
-      <label className="date-label">اليوم<input type="date" min={cairoToday()} max={addDays(cairoToday(), 13)} value={date} onChange={(event) => { findNextDate.current = false; setDate(event.target.value); setSlot(null); setSlots([]); setSlotsLoading(true); setBooking(null); setAvailabilityMessage('') }} /></label>
+      <label className="date-label">اليوم<input type="date" min={cairoToday()} max={addDays(cairoToday(), 13)} value={date} onChange={(event) => { findNextDate.current = false; setDate(event.target.value); setSlot(null); setSlots([]); setSlotsLoading(true); setSlotsVersion((current) => current + 1); setBooking(null); setAvailabilityMessage('') }} /></label>
       {availabilityMessage && <p className="inline-message">{availabilityMessage}</p>}
       {slotsLoading && <p>جاري تحميل المواعيد...</p>}
-      {!slotsLoading && !error && slots.length === 0 && <p>مفيش مواعيد متاحة لليوم ده. جرّب يوم تاني.</p>}
-      <div className="slot-list">{slots.map((item) => <button key={item._id} className={slot?._id === item._id ? 'selected' : ''} onClick={() => { setSlot(item); setBooking(null); setMessage('') }}>{item.time}</button>)}</div>
+      {!slotsLoading && !error && slots.length === 0 && <p>مفيش مواعيد لليوم ده. جرّب يوم تاني.</p>}
+      {!slotsLoading && !error && slots.length > 0 && slots.every((item) => item.isBooked || (date === cairoToday() && item.time <= cairoTime())) && <p>كل مواعيد اليوم ده محجوزة أو وقتها فات. جرّب يوم تاني.</p>}
+      <div className="slot-list">{slots.map((item) => {
+        const past = date === cairoToday() && item.time <= cairoTime()
+        const unavailable = item.isBooked || past
+        const status = item.isBooked ? 'محجوز' : past ? 'فات' : ''
+        return <button key={item._id} type="button" disabled={unavailable}
+          className={item.isBooked ? 'booked' : past ? 'past' : slot?._id === item._id ? 'selected' : ''}
+          aria-label={`${item.time}${status ? `، ${status}` : '، متاح'}`}
+          onClick={() => { setSlot(item); setBooking(null); setMessage('') }}>
+          <span className="slot-time">{item.time}</span>{status && <small>{status}</small>}
+        </button>
+      })}</div>
       {slot && <form className="stack-form" onSubmit={createBooking} noValidate>
         <h3>حجز {date} الساعة {slot.time}</h3>
         {!token && <p>سجّل الدخول أولًا علشان تكمل الحجز.</p>}

@@ -103,8 +103,13 @@ exports.getDoctorSlots = async (req, res) => {
       : await Doctor.findOne({ doctorNumber: Number(id) });
     if (!doctor) return res.status(404).json({ success: false, message: 'Doctor not found' });
 
-    const slots = await Slot.find({ doctor: doctor._id, date, isBooked: false }).sort({ time: 1 });
-    res.json({ success: true, count: slots.length, data: slots });
+    const slots = await Slot.find({ doctor: doctor._id, date }).sort({ time: 1 });
+    res.json({
+      success: true,
+      count: slots.length,
+      availableCount: slots.filter((slot) => !slot.isBooked).length,
+      data: slots,
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
