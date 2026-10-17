@@ -28,6 +28,7 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
   const [patientName, setPatientName] = useState('')
   const [phone, setPhone] = useState('')
   const [dob, setDob] = useState('')
+  const [formErrors, setFormErrors] = useState({})
   const [booking, setBooking] = useState(null)
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -77,6 +78,7 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
     setBooking(null)
     setMessage('')
     setError('')
+    setFormErrors({})
   }
 
   function closeDoctor() {
@@ -84,17 +86,35 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
     setSlot(null)
     setBooking(null)
     setError('')
+    setFormErrors({})
   }
 
   async function createBooking(event) {
     event.preventDefault()
+    const errors = {}
+    if (!patientName.trim()) errors.patientName = 'اكتب اسم المريض.'
+    if (!phone.trim()) {
+      errors.phone = 'اكتب رقم الموبايل.'
+    } else if (!/^01[0125][0-9]{8}$/.test(phone.trim())) {
+      errors.phone = 'رقم الموبايل لازم يكون ١١ رقم ويبدأ بـ 010 أو 011 أو 012 أو 015.'
+    }
+    const dobDate = new Date(dob + 'T00:00:00Z')
+    if (!dob) {
+      errors.dob = 'اختار تاريخ الميلاد.'
+    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(dob) || Number.isNaN(dobDate.getTime()) || dobDate.toISOString().slice(0, 10) !== dob) {
+      errors.dob = 'تاريخ الميلاد غير صحيح.'
+    } else if (dob > cairoToday()) {
+      errors.dob = 'تاريخ الميلاد لا يمكن يكون في المستقبل.'
+    }
+    setFormErrors(errors)
+    if (Object.keys(errors).length > 0) return
     if (!token) return onGoAccount()
     setBusy(true)
     setError('')
     try {
       const result = await api('/api/appointments', {
         method: 'POST', token,
-        body: { slotId: slot._id, patientName, phone, dob },
+        body: { slotId: slot._id, patientName: patientName.trim(), phone: phone.trim(), dob },
       })
       setBooking(result.appointment)
       setMessage('تم حجز الميعاد مؤقتًا. أكمل تأكيد الدفع خلال ١٥ دقيقة.')
@@ -143,12 +163,15 @@ function Doctors({ token, onGoAccount, onGoAppointments }) {
       {slotsLoading && <p>جاري تحميل المواعيد...</p>}
       {!slotsLoading && !error && slots.length === 0 && <p>مفيش مواعيد متاحة لليوم ده. جرّب يوم تاني.</p>}
       <div className="slot-list">{slots.map((item) => <button key={item._id} className={slot?._id === item._id ? 'selected' : ''} onClick={() => { setSlot(item); setBooking(null); setMessage('') }}>{item.time}</button>)}</div>
-      {slot && <form className="stack-form" onSubmit={createBooking}>
+      {slot && <form className="stack-form" onSubmit={createBooking} noValidate>
         <h3>حجز {date} الساعة {slot.time}</h3>
         {!token && <p>سجّل الدخول أولًا علشان تكمل الحجز.</p>}
-        <label>اسم المريض<input required value={patientName} onChange={(event) => setPatientName(event.target.value)} /></label>
-        <label>رقم الموبايل<input type="tel" required pattern="01[0125][0-9]{8}" placeholder="01xxxxxxxxx" value={phone} onChange={(event) => setPhone(event.target.value)} /></label>
-        <label>تاريخ الميلاد<input type="date" max={cairoToday()} required value={dob} onChange={(event) => setDob(event.target.value)} /></label>
+        <label>اسم المريض<input value={patientName} aria-invalid={Boolean(formErrors.patientName)} aria-describedby={formErrors.patientName ? 'patient-name-error' : undefined} onChange={(event) => { setPatientName(event.target.value); setFormErrors((current) => ({ ...current, patientName: '' })) }} />
+          {formErrors.patientName && <small className="field-error" id="patient-name-error">{formErrors.patientName}</small>}</label>
+        <label>رقم الموبايل<input type="tel" inputMode="numeric" placeholder="01xxxxxxxxx" value={phone} aria-invalid={Boolean(formErrors.phone)} aria-describedby={formErrors.phone ? 'patient-phone-error' : undefined} onChange={(event) => { setPhone(event.target.value); setFormErrors((current) => ({ ...current, phone: '' })) }} />
+          {formErrors.phone && <small className="field-error" id="patient-phone-error">{formErrors.phone}</small>}</label>
+        <label>تاريخ الميلاد<input type="date" max={cairoToday()} value={dob} aria-invalid={Boolean(formErrors.dob)} aria-describedby={formErrors.dob ? 'patient-dob-error' : undefined} onChange={(event) => { setDob(event.target.value); setFormErrors((current) => ({ ...current, dob: '' })) }} />
+          {formErrors.dob && <small className="field-error" id="patient-dob-error">{formErrors.dob}</small>}</label>
         <button disabled={busy}>{busy ? 'جاري الحجز...' : 'احجز الميعاد'}</button>
       </form>}
       {message && <p className="inline-message">{message}</p>}
