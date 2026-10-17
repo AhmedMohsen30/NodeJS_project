@@ -10,6 +10,8 @@ app.get('/health', (req, res) => {
   res.json({ message: 'Server is running' });
 });
 
+app.use('/api/doctors', require('./routes/doctorRoutes'));
+
 // Clinic routes are already written by the team.
 app.use('/api', require('./routes/clinicRoutes'));
 
@@ -17,7 +19,6 @@ app.use('/api/auth', require('./routes/authRoutes'));
 
 // Add these routes when the other team files are ready.
 // Keep appointmentActionsRoutes before appointmentRoutes so /my works.
-// app.use('/api/doctors', require('./routes/doctorRoutes'));
 // app.use('/api/appointments', require('./routes/appointmentActionsRoutes'));
 // app.use('/api/appointments', require('./routes/appointmentRoutes'));
 
